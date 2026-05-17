@@ -49,9 +49,6 @@ function shortSoilLabel(name) {
 
 /**
  * Stratified soil profile with pile cap on top and semi-transparent pile through soil.
- * @param {Array<{ thickness: string, soil: string }>} profileLayers
- * @param {number} diameterM — pile diameter (m)
- * @param {number} [capThicknessM] — cap thickness (m); optional, scales cap block height
  */
 export default function PileCylinderVisual({ profileLayers, diameterM, capThicknessM }) {
   const clipId = useId().replace(/:/g, '');
@@ -105,6 +102,7 @@ export default function PileCylinderVisual({ profileLayers, diameterM, capThickn
   const cx = SOIL_COL_W / 2 + 4;
   const pileW = Math.min(40, Math.max(16, D * 52));
   const capW = Math.min(58, Math.max(pileW * 1.52, pileW + 20));
+  const shaftCapY = yCapTop + capH * 0.62;
 
   return (
     <div
@@ -160,7 +158,6 @@ export default function PileCylinderVisual({ profileLayers, diameterM, capThickn
           {hasCapDim ? `Pile cap · ${capM.toFixed(2)} m` : 'Pile cap'}
         </text>
 
-        {/* Pile cap (concrete block) */}
         <rect
           x={cx - capW / 2}
           y={yCapTop}
@@ -180,7 +177,6 @@ export default function PileCylinderVisual({ profileLayers, diameterM, capThickn
           strokeWidth={1}
         />
 
-        {/* Ground / fill surface */}
         <line
           x1={PAD_SIDE}
           y1={ySoilTop}
@@ -248,17 +244,18 @@ export default function PileCylinderVisual({ profileLayers, diameterM, capThickn
           strokeWidth={1}
         />
 
-        {/* Shaft through cap (below label zone, connects to soil column) */}
-        <rect
-          x={cx - pileW / 2}
-          y={yCapTop + capH * 0.62}
-          width={pileW}
-          height={Math.max(0, ySoilTop - (yCapTop + capH * 0.62))}
-          fill="rgba(203, 213, 225, 0.62)"
-          stroke="#475569"
-          strokeWidth={1}
-          rx={1}
-        />
+        {ySoilTop > shaftCapY && (
+          <rect
+            x={cx - pileW / 2}
+            y={shaftCapY}
+            width={pileW}
+            height={ySoilTop - shaftCapY}
+            fill="rgba(203, 213, 225, 0.62)"
+            stroke="#475569"
+            strokeWidth={1}
+            rx={1}
+          />
+        )}
 
         {layerBoxes.map((box) => (
           <g key={`lbl-${box.index}`}>

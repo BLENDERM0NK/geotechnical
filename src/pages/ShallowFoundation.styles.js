@@ -195,3 +195,22 @@ export const ErrorBanner = styled.div`
   font-weight: 600;
 `;
 
+export const Readout = styled.div`
+  margin-top: 0.35rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 12px;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.22);
+  font-size: 0.9rem;
+  color: #312e81;
+  font-weight: 600;
+`;
+
+export const Hint = styled.p`
+  margin: 0.25rem 0 0;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #64748b;
+  line-height: 1.45;
+`;
+

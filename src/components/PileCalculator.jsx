@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import PileCylinderVisual from './PileCylinderVisual';
+import PileReportExport from './PileReportExport';
+import { layersCompleteForPdf } from '../pileReport/layersCompleteForPdf';
 import {
   Container,
   Canvas,
@@ -110,7 +112,8 @@ const cumulativeLayerDepthM = (layerList, idx) => {
 };
 
 export default function PileCalculator() {
-  const [pile, setPile] = useState({ diameter: '', length: '', capThickness: '', criticalDepth: '', factor: 15 });
+  const initialPile = { diameter: '', length: '', capThickness: '', criticalDepth: '', factor: 15 };
+  const [pile, setPile] = useState(initialPile);
   const [layers, setLayers] = useState([]);
   const [maxOverburden, setMaxOverburden] = useState(0);
   const [pileVisualLayerIndex, setPileVisualLayerIndex] = useState(null);
@@ -118,6 +121,15 @@ export default function PileCalculator() {
   // new snapshot states
   const [totalDepth, setTotalDepth] = useState(0);
   const [overburdenAtDepth, setOverburdenAtDepth] = useState(0);
+
+  const resetAll = () => {
+    setPile(initialPile);
+    setLayers([]);
+    setMaxOverburden(0);
+    setPileVisualLayerIndex(null);
+    setTotalDepth(0);
+    setOverburdenAtDepth(0);
+  };
 
   useEffect(() => {
     if (layers.length === 0) {
@@ -366,6 +378,15 @@ export default function PileCalculator() {
               <Tag>Skin friction</Tag>
               <Tag>End bearing</Tag>
             </TagList>
+            {layersCompleteForPdf(layers, pile) && (
+              <PileReportExport
+                pile={pile}
+                layers={layers}
+                maxOverburden={maxOverburden}
+                totalDepth={totalDepth}
+                overburdenAtDepth={overburdenAtDepth}
+              />
+            )}
           </Header>
 
           <ContentGrid>
@@ -403,6 +424,11 @@ export default function PileCalculator() {
                     <input value={pile.criticalDepth} readOnly />
                   </label>
                 </FormGroup>
+                <ButtonRow style={{ marginTop: '0.75rem' }}>
+                  <Button type="button" onClick={resetAll}>
+                    Reset
+                  </Button>
+                </ButtonRow>
                 {showSoilLayeringHint && (
                   <Info style={{ marginTop: '1rem', padding: '0.85rem 1rem', background: 'rgba(99, 102, 241, 0.08)', borderRadius: '16px', border: '1px solid rgba(99, 102, 241, 0.25)' }}>
                     Make layering of soil of {+soilLayeringDepthM.toFixed(3)} m as pile cap will be in soil layer only.

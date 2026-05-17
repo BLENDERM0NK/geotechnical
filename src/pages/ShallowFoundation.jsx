@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Navbar from '../components/Navbar';
 import {
   Page,
@@ -16,123 +16,205 @@ import {
   SecondaryButton,
   MetricsGrid,
   MetricCard,
-  ResultPanel,
-  ResultHeader,
-  BreakdownList,
   ErrorBanner,
+  Readout,
+  Hint,
 } from './ShallowFoundation.styles';
 
-const bearingFactors = [
-  { phi: 0, Nc: 5.7, Nq: 1, Ng: 0 },
-  { phi: 5, Nc: 6.5, Nq: 1.6, Ng: 0.5 },
-  { phi: 10, Nc: 7.5, Nq: 2.5, Ng: 1.2 },
-  { phi: 15, Nc: 9.7, Nq: 3.9, Ng: 2.7 },
-  { phi: 20, Nc: 12.9, Nq: 6.4, Ng: 5.4 },
-  { phi: 25, Nc: 17.7, Nq: 10.6, Ng: 10.4 },
-  { phi: 30, Nc: 25.1, Nq: 18.4, Ng: 19.7 },
-  { phi: 35, Nc: 37.2, Nq: 34.8, Ng: 41.4 },
-  { phi: 40, Nc: 57.8, Nq: 64.2, Ng: 92.0 },
-];
+const G = 9.807;
 
-const interpolateFactors = (phi) => {
-  if (phi <= bearingFactors[0].phi) return bearingFactors[0];
-  if (phi >= bearingFactors[bearingFactors.length - 1].phi) return bearingFactors[bearingFactors.length - 1];
+/**
+ * Excel equivalent (Z = water table depth, E = depth of foundation, ρ = density t/m³):
+ * IF(Z>=E, ρ*G, IF(Z=0,(ρ-1)*G, ((Z*ρ*G)+((E-Z)*(ρ-1)*G))/E))
+ */
+function densityIncludingWaterEffectKnPerM3(rhoTPerM3, depthFoundationM, waterTableDepthM) {
+  const rho = parseFloat(rhoTPerM3);
+  const E = parseFloat(depthFoundationM);
+  const Z = parseFloat(waterTableDepthM);
+  if (!Number.isFinite(rho) || !Number.isFinite(E) || !Number.isFinite(Z)) return null;
+  if (E <= 0) return null;
 
-  for (let i = 0; i < bearingFactors.length - 1; i++) {
-    const current = bearingFactors[i];
-    const next = bearingFactors[i + 1];
-    if (phi >= current.phi && phi <= next.phi) {
-      const ratio = (phi - current.phi) / (next.phi - current.phi);
-      return {
-        phi,
-        Nc: +(current.Nc + ratio * (next.Nc - current.Nc)).toFixed(2),
-        Nq: +(current.Nq + ratio * (next.Nq - current.Nq)).toFixed(2),
-        Ng: +(current.Ng + ratio * (next.Ng - current.Ng)).toFixed(2),
-      };
-    }
-  }
-  return bearingFactors[0];
-};
+  if (Z >= E) return rho * G;
+  if (Math.abs(Z) < 1e-12) return (rho - 1) * G;
+  return (Z * rho * G + (E - Z) * (rho - 1) * G) / E;
+}
 
-const initialInputs = {
-  width: '',
+/**
+ * Excel: DEGREES(ATAN(0.67 * TAN(RADIANS(phi))))  i.e. same as ATAN(...) * (180/PI)
+ */
+function mobilizedAngleOfShearingResistanceDeg(phiDeg) {
+  const phi = parseFloat(phiDeg);
+  if (!Number.isFinite(phi)) return null;
+  return Math.atan(0.67 * Math.tan((phi * Math.PI) / 180)) * (180 / Math.PI);
+}
+
+const initialState = {
+  foundationType: 'rectangular',
+  depthFoundation: '',
+  waterTableDepth: '',
   length: '',
-  depth: '',
-  unitWeight: '',
+  width: '',
+  side: '',
+  diameter: '',
+  factorOfSafety: '3',
+  densityAbove: '',
+  densityBelow: '',
   cohesion: '',
-  phi: '',
-  surcharge: '',
-  fs: 3,
+  phiDegrees: '',
+  voidRatio: '',
 };
 
 function ShallowFoundation() {
-  const [inputs, setInputs] = useState(initialInputs);
-  const [results, setResults] = useState(null);
+  const [inputs, setInputs] = useState(initialState);
   const [error, setError] = useState('');
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
+  const handleChange = (e) => {
+    const { name, value } = e.target;
     setInputs((prev) => ({ ...prev, [name]: value }));
+    setError('');
+  };
+
+  const handleFoundationType = (e) => {
+    const foundationType = e.target.value;
+    setInputs((prev) => ({ ...prev, foundationType }));
+    setError('');
   };
 
   const resetForm = () => {
-    setInputs(initialInputs);
-    setResults(null);
+    setInputs(initialState);
     setError('');
   };
 
+  const gammaAbove = useMemo(
+    () => densityIncludingWaterEffectKnPerM3(inputs.densityAbove, inputs.depthFoundation, inputs.waterTableDepth),
+    [inputs.densityAbove, inputs.depthFoundation, inputs.waterTableDepth]
+  );
+
+  const gammaBelow = useMemo(
+    () => densityIncludingWaterEffectKnPerM3(inputs.densityBelow, inputs.depthFoundation, inputs.waterTableDepth),
+    [inputs.densityBelow, inputs.depthFoundation, inputs.waterTableDepth]
+  );
+
+  const mobilizedPhiDeg = useMemo(
+    () => mobilizedAngleOfShearingResistanceDeg(inputs.phiDegrees),
+    [inputs.phiDegrees]
+  );
+
+  const geometrySummary = useMemo(() => {
+    const { foundationType, length, width, side, diameter } = inputs;
+    const L = parseFloat(length);
+    const W = parseFloat(width);
+    const S = parseFloat(side);
+    const D = parseFloat(diameter);
+
+    switch (foundationType) {
+      case 'rectangular':
+        if (Number.isFinite(L) && Number.isFinite(W) && L > 0 && W > 0) {
+          return { label: 'Footprint', text: `${L} m × ${W} m (area ${(L * W).toFixed(3)} m²)` };
+        }
+        return { label: 'Footprint', text: 'Enter length and width (m).' };
+      case 'square':
+        if (Number.isFinite(S) && S > 0) {
+          return { label: 'Footprint', text: `${S} m × ${S} m (area ${(S * S).toFixed(3)} m²)` };
+        }
+        return { label: 'Footprint', text: 'Enter side length (m).' };
+      case 'strip':
+        if (Number.isFinite(W) && W > 0) {
+          return { label: 'Strip', text: `Width ${W} m (unit strip along length).` };
+        }
+        return { label: 'Strip', text: 'Enter width B (m).' };
+      case 'circular':
+        if (Number.isFinite(D) && D > 0) {
+          const r = D / 2;
+          return { label: 'Circular', text: `Diameter ${D} m (area ${(Math.PI * r * r).toFixed(3)} m²).` };
+        }
+        return { label: 'Circular', text: 'Enter diameter (m).' };
+      default:
+        return { label: '—', text: '—' };
+    }
+  }, [inputs]);
+
   const validate = () => {
-    const required = ['width', 'length', 'depth', 'unitWeight', 'cohesion', 'phi'];
-    for (const key of required) {
-      if (!inputs[key]) {
-        setError('Please fill in all required fields.');
+    const Df = parseFloat(inputs.depthFoundation);
+    const Z = parseFloat(inputs.waterTableDepth);
+    const fs = parseFloat(inputs.factorOfSafety);
+    const rhoA = parseFloat(inputs.densityAbove);
+    const rhoB = parseFloat(inputs.densityBelow);
+
+    if (!Number.isFinite(Df) || Df <= 0) {
+      setError('Depth of foundation must be a positive number (m).');
+      return false;
+    }
+    if (!Number.isFinite(Z) || Z < 0) {
+      setError('Water table depth must be zero or positive (m from surface).');
+      return false;
+    }
+    if (!Number.isFinite(fs) || fs <= 0) {
+      setError('Factor of safety must be positive.');
+      return false;
+    }
+    if (!Number.isFinite(rhoA) || rhoA <= 0 || !Number.isFinite(rhoB) || rhoB <= 0) {
+      setError('Densities above and below foundation level must be positive (t/m³).');
+      return false;
+    }
+
+    const { foundationType, length, width, side, diameter } = inputs;
+    const L = parseFloat(length);
+    const W = parseFloat(width);
+    const S = parseFloat(side);
+    const Di = parseFloat(diameter);
+
+    if (foundationType === 'rectangular') {
+      if (!Number.isFinite(L) || !Number.isFinite(W) || L <= 0 || W <= 0) {
+        setError('Rectangular footing: enter positive length and width (m).');
         return false;
       }
     }
+    if (foundationType === 'square') {
+      if (!Number.isFinite(S) || S <= 0) {
+        setError('Square footing: enter positive side length (m).');
+        return false;
+      }
+    }
+    if (foundationType === 'strip') {
+      if (!Number.isFinite(W) || W <= 0) {
+        setError('Strip footing: enter positive width B (m).');
+        return false;
+      }
+    }
+    if (foundationType === 'circular') {
+      if (!Number.isFinite(Di) || Di <= 0) {
+        setError('Circular footing: enter positive diameter (m).');
+        return false;
+      }
+    }
+
+    const c = parseFloat(inputs.cohesion);
+    const phi = parseFloat(inputs.phiDegrees);
+    const e = parseFloat(inputs.voidRatio);
+    if (!Number.isFinite(c) || c < 0) {
+      setError('Cohesion must be zero or positive (kPa).');
+      return false;
+    }
+    if (!Number.isFinite(phi) || phi < 0 || phi > 89.99) {
+      setError('Angle of shearing resistance must be between 0° and 90° (exclusive of 90°).');
+      return false;
+    }
+    if (!Number.isFinite(e) || e <= 0) {
+      setError('Void ratio must be positive.');
+      return false;
+    }
+
+    setError('');
     return true;
   };
 
-  const handleCalculate = () => {
-    if (!validate()) return;
-
-    const B = parseFloat(inputs.width);
-    const L = parseFloat(inputs.length);
-    const Df = parseFloat(inputs.depth);
-    const gamma = parseFloat(inputs.unitWeight);
-    const c = parseFloat(inputs.cohesion);
-    const phi = parseFloat(inputs.phi);
-    const surcharge = parseFloat(inputs.surcharge || 0);
-    const fs = parseFloat(inputs.fs || 3);
-
-    if (B <= 0 || L <= 0 || Df <= 0 || gamma <= 0 || fs <= 0) {
-      setError('Dimensions, unit weight, and factor of safety must be positive.');
-      return;
-    }
-
-    const { Nc, Nq, Ng } = interpolateFactors(phi);
-    const q = gamma * Df + surcharge;
-    const shapeRatio = Math.min(B / L || 1, 1);
-    const sc = 1 + 0.2 * shapeRatio;
-    const sq = 1 + 0.1 * shapeRatio;
-    const sγ = Math.max(0.6, 1 - 0.4 * shapeRatio);
-
-    const cohesionTerm = c * Nc * sc;
-    const surchargeTerm = q * Nq * sq;
-    const unitWeightTerm = 0.5 * gamma * B * Ng * sγ;
-
-    const qu = cohesionTerm + surchargeTerm + unitWeightTerm;
-    const qa = qu / fs;
-
-    setResults({
-      ultimate: +qu.toFixed(2),
-      allowable: +qa.toFixed(2),
-      cohesionTerm: +cohesionTerm.toFixed(2),
-      surchargeTerm: +surchargeTerm.toFixed(2),
-      unitWeightTerm: +unitWeightTerm.toFixed(2),
-      factors: { Nc, Nq, Ng, sc: +sc.toFixed(2), sq: +sq.toFixed(2), sγ: +sγ.toFixed(2) },
-    });
-    setError('');
+  const handleApply = () => {
+    validate();
   };
+
+  const fsDisplay = parseFloat(inputs.factorOfSafety);
+  const fsOk = Number.isFinite(fsDisplay) && fsDisplay > 0;
 
   return (
     <>
@@ -140,133 +222,220 @@ function ShallowFoundation() {
       <Page>
         <Canvas>
           <Header>
-            <Title>Shallow Foundation Capacity</Title>
+            <Title>Shallow foundation capacity</Title>
             <Subtitle>
-              Estimate ultimate and allowable bearing capacity for isolated or strip footings using Terzaghi&apos;s formulation with interpolated bearing factors.
+              Foundation geometry, embedment, water table, factor of safety, soil densities (t/m³), and strength
+              parameters. Equivalent unit weights with water and mobilized shearing angle follow your spreadsheet rules.
             </Subtitle>
           </Header>
 
           <FormGrid>
             <FormCard>
-              <h3>Geometry</h3>
+              <h3>Foundation and embedment</h3>
               <Label>
-                Width B (m)
-                <Input name="width" type="number" value={inputs.width} onChange={handleChange} placeholder="e.g. 1.2" />
+                Type of foundation
+                <Select name="foundationType" value={inputs.foundationType} onChange={handleFoundationType}>
+                  <option value="rectangular">Rectangular</option>
+                  <option value="square">Square</option>
+                  <option value="strip">Strip</option>
+                  <option value="circular">Circular</option>
+                </Select>
               </Label>
               <Label>
-                Length L (m)
-                <Input name="length" type="number" value={inputs.length} onChange={handleChange} placeholder="e.g. 1.8" />
+                Depth of foundation (m)
+                <Input
+                  name="depthFoundation"
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={inputs.depthFoundation}
+                  onChange={handleChange}
+                  placeholder="e.g. 1.5"
+                />
               </Label>
               <Label>
-                Embedment depth Df (m)
-                <Input name="depth" type="number" value={inputs.depth} onChange={handleChange} placeholder="e.g. 1.5" />
-              </Label>
-            </FormCard>
-
-            <FormCard>
-              <h3>Soil parameters</h3>
-              <Label>
-                Unit weight γ (kN/m³)
-                <Input name="unitWeight" type="number" value={inputs.unitWeight} onChange={handleChange} placeholder="e.g. 18" />
-              </Label>
-              <Label>
-                Cohesion c (kPa)
-                <Input name="cohesion" type="number" value={inputs.cohesion} onChange={handleChange} placeholder="e.g. 25" />
-              </Label>
-              <Label>
-                Friction angle ϕ (°)
-                <Input name="phi" type="number" value={inputs.phi} onChange={handleChange} placeholder="e.g. 28" />
-              </Label>
-            </FormCard>
-
-            <FormCard>
-              <h3>Design settings</h3>
-              <Label>
-                Surcharge (kPa)
-                <Input name="surcharge" type="number" value={inputs.surcharge} onChange={handleChange} placeholder="optional" />
+                Water table depth for calculation (m from surface)
+                <Input
+                  name="waterTableDepth"
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={inputs.waterTableDepth}
+                  onChange={handleChange}
+                  placeholder="e.g. 0.8"
+                />
               </Label>
               <Label>
                 Factor of safety
-                <Select name="fs" value={inputs.fs} onChange={handleChange}>
-                  {[2, 2.5, 3, 3.5].map((value) => (
-                    <option key={value} value={value}>
-                      {value}
-                    </option>
-                  ))}
-                </Select>
+                <Input
+                  name="factorOfSafety"
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={inputs.factorOfSafety}
+                  onChange={handleChange}
+                  placeholder="e.g. 3"
+                />
               </Label>
-              <small style={{ color: '#475569' }}>Shape factors adjust automatically using B / L.</small>
+            </FormCard>
+
+            <FormCard>
+              <h3>Geometry (m)</h3>
+              {inputs.foundationType === 'rectangular' && (
+                <>
+                  <Label>
+                    Length (m)
+                    <Input name="length" type="number" min="0" step="any" value={inputs.length} onChange={handleChange} placeholder="e.g. 2.4" />
+                  </Label>
+                  <Label>
+                    Width (m)
+                    <Input name="width" type="number" min="0" step="any" value={inputs.width} onChange={handleChange} placeholder="e.g. 1.8" />
+                  </Label>
+                </>
+              )}
+              {inputs.foundationType === 'square' && (
+                <Label>
+                  Side length (m)
+                  <Input name="side" type="number" min="0" step="any" value={inputs.side} onChange={handleChange} placeholder="e.g. 2.0" />
+                </Label>
+              )}
+              {inputs.foundationType === 'strip' && (
+                <Label>
+                  Width B (m)
+                  <Input name="width" type="number" min="0" step="any" value={inputs.width} onChange={handleChange} placeholder="e.g. 1.2" />
+                </Label>
+              )}
+              {inputs.foundationType === 'circular' && (
+                <Label>
+                  Diameter (m)
+                  <Input name="diameter" type="number" min="0" step="any" value={inputs.diameter} onChange={handleChange} placeholder="e.g. 1.5" />
+                </Label>
+              )}
+              <Readout>
+                {geometrySummary.label}: {geometrySummary.text}
+              </Readout>
+            </FormCard>
+
+            <FormCard>
+              <h3>Densities (t/m³)</h3>
+              <Label>
+                Density above foundation level (t/m³)
+                <Input
+                  name="densityAbove"
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={inputs.densityAbove}
+                  onChange={handleChange}
+                  placeholder="e.g. 1.85"
+                />
+              </Label>
+              {gammaAbove !== null ? (
+                <Readout>Density including water effect: {gammaAbove.toFixed(4)} kN/m³</Readout>
+              ) : (
+                <Readout>Density including water effect: — (enter Df, Z, and density)</Readout>
+              )}
+              <Hint>
+                If Z ≥ Df: ρ×9.807. If Z = 0: (ρ−1)×9.807. Else: (Z·ρ·9.807 + (Df−Z)·(ρ−1)·9.807) / Df — Z = water table depth, Df = depth of foundation.
+              </Hint>
+
+              <Label style={{ marginTop: '0.75rem' }}>
+                Density below foundation level (t/m³)
+                <Input
+                  name="densityBelow"
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={inputs.densityBelow}
+                  onChange={handleChange}
+                  placeholder="e.g. 1.92"
+                />
+              </Label>
+              {gammaBelow !== null ? (
+                <Readout>Density including water effect: {gammaBelow.toFixed(4)} kN/m³</Readout>
+              ) : (
+                <Readout>Density including water effect: — (enter Df, Z, and density)</Readout>
+              )}
+              <Hint>Same piecewise rule using density below foundation level.</Hint>
+            </FormCard>
+
+            <FormCard>
+              <h3>Strength and state</h3>
+              <Label>
+                Cohesion (kPa)
+                <Input
+                  name="cohesion"
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={inputs.cohesion}
+                  onChange={handleChange}
+                  placeholder="e.g. 15"
+                />
+              </Label>
+              <Label>
+                Angle of shearing resistance ϕ (°)
+                <Input
+                  name="phiDegrees"
+                  type="number"
+                  min="0"
+                  max="89.9"
+                  step="any"
+                  value={inputs.phiDegrees}
+                  onChange={handleChange}
+                  placeholder="e.g. 32"
+                />
+              </Label>
+              {mobilizedPhiDeg !== null ? (
+                <Readout>Mobilized angle of shearing resistance: {mobilizedPhiDeg.toFixed(4)}°</Readout>
+              ) : (
+                <Readout>Mobilized angle of shearing resistance: — (enter ϕ)</Readout>
+              )}
+              <Hint>ATAN(0.67 × TAN(RADIANS(ϕ))) in degrees (same as your Excel).</Hint>
+              <Label style={{ marginTop: '0.75rem' }}>
+                Void ratio e
+                <Input
+                  name="voidRatio"
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={inputs.voidRatio}
+                  onChange={handleChange}
+                  placeholder="e.g. 0.65"
+                />
+              </Label>
             </FormCard>
           </FormGrid>
 
           {error && <ErrorBanner>{error}</ErrorBanner>}
 
           <ButtonRow>
-            <PrimaryButton type="button" onClick={handleCalculate}>
-              Calculate capacity
+            <PrimaryButton type="button" onClick={handleApply}>
+              Check inputs
             </PrimaryButton>
             <SecondaryButton type="button" onClick={resetForm}>
               Reset
             </SecondaryButton>
           </ButtonRow>
 
-          {results && (
-            <>
-              <MetricsGrid>
-                <MetricCard>
-                  <span>Ultimate bearing capacity</span>
-                  <h3>{results.ultimate} kPa</h3>
-                </MetricCard>
-                <MetricCard>
-                  <span>Allowable bearing capacity</span>
-                  <h3>{results.allowable} kPa</h3>
-                </MetricCard>
-                <MetricCard>
-                  <span>Factor of safety</span>
-                  <h3>× {inputs.fs}</h3>
-                </MetricCard>
-              </MetricsGrid>
-
-              <ResultPanel>
-                <ResultHeader>
-                  <h2>Contribution breakdown</h2>
-                  <p>N₍c₎, N₍q₎, N₍γ₎ interpolated for ϕ = {inputs.phi}°</p>
-                </ResultHeader>
-                <BreakdownList>
-                  <li>
-                    <h4>Cohesion term (c · Nc · sc)</h4>
-                    <span>{results.cohesionTerm} kPa</span>
-                  </li>
-                  <li>
-                    <h4>Surcharge term (q · Nq · sq)</h4>
-                    <span>{results.surchargeTerm} kPa</span>
-                  </li>
-                  <li>
-                    <h4>Unit weight term (0.5γB · Nγ · sγ)</h4>
-                    <span>{results.unitWeightTerm} kPa</span>
-                  </li>
-                </BreakdownList>
-                <BreakdownList>
-                  <li>
-                    <h4>Nc</h4>
-                    <span>{results.factors.Nc}</span>
-                  </li>
-                  <li>
-                    <h4>Nq</h4>
-                    <span>{results.factors.Nq}</span>
-                  </li>
-                  <li>
-                    <h4>Nγ</h4>
-                    <span>{results.factors.Ng}</span>
-                  </li>
-                  <li>
-                    <h4>Shape factors</h4>
-                    <span>sc {results.factors.sc} · sq {results.factors.sq} · sγ {results.factors.sγ}</span>
-                  </li>
-                </BreakdownList>
-              </ResultPanel>
-            </>
-          )}
+          <MetricsGrid>
+            <MetricCard>
+              <span>γ above (with water), kN/m³</span>
+              <h3>{gammaAbove !== null ? gammaAbove.toFixed(3) : '—'}</h3>
+            </MetricCard>
+            <MetricCard>
+              <span>γ below (with water), kN/m³</span>
+              <h3>{gammaBelow !== null ? gammaBelow.toFixed(3) : '—'}</h3>
+            </MetricCard>
+            <MetricCard>
+              <span>Factor of safety (stored)</span>
+              <h3>{fsOk ? fsDisplay : '—'}</h3>
+            </MetricCard>
+            <MetricCard>
+              <span>Mobilized ϕ (°)</span>
+              <h3>{mobilizedPhiDeg !== null ? mobilizedPhiDeg.toFixed(3) : '—'}</h3>
+            </MetricCard>
+          </MetricsGrid>
         </Canvas>
       </Page>
     </>
@@ -274,4 +443,3 @@ function ShallowFoundation() {
 }
 
 export default ShallowFoundation;
-
