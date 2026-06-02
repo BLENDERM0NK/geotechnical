@@ -26,6 +26,13 @@ const toolCards = [
     cta: 'Build profile',
     path: '/soil-profile',
   },
+  {
+    icon: '🏛️',
+    title: 'RS Wall Design',
+    text: 'Reinforced soil retaining wall geometry, loading, and layerwise external stability.',
+    cta: 'Open RS wall',
+    path: '/rs-wall-design',
+  },
 ];
 
 const insightCards = [

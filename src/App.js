@@ -6,6 +6,7 @@ import Footer from './components/Footer';
 import PileCalculator from './components/PileCalculator';
 import ShallowFoundation from './pages/ShallowFoundation';
 import SoilProfile from './pages/SoilProfile';
+import RsWallDesign from './pages/RsWallDesign';
 import AuthPage from './pages/AuthPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -60,6 +61,15 @@ function App() {
               element={
                 <ProtectedRoute>
                   <SoilProfile />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/rs-wall-design"
+              element={
+                <ProtectedRoute>
+                  <RsWallDesign />
                 </ProtectedRoute>
               }
             />
