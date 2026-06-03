@@ -13,6 +13,8 @@ import {
   generateLayerwiseRows,
   getActiveDesignFactors,
 } from '../rsWall/rsWallCalculations';
+import { computeExternalStabilityRows } from '../rsWall/rsWallExternalStability';
+import LayerwiseStabilityTable from '../components/rsWall/LayerwiseStabilityTable';
 import { initialRsWallState } from '../rsWall/rsWallInitialState';
 import { validateRsWallInputs, validateLayerwiseSubmit } from '../rsWall/rsWallValidation';
 import {
@@ -135,15 +137,26 @@ function RsWallDesign() {
     const H = parseFloat(inputs.H);
     const Zj = parseFloat(inputs.Zj);
     const Sv = parseFloat(inputs.Sv);
-    const rows = generateLayerwiseRows({ H, Zj, Sv });
+    const baseRows = generateLayerwiseRows({ H, Zj, Sv });
 
-    if (!rows.length) {
+    if (!baseRows.length) {
       setError('Could not generate reinforcement layers. Check H, Zj, and Sv.');
       return;
     }
 
+    const enrichedRows = computeExternalStabilityRows({
+      baseRows,
+      loadCombination,
+      designState,
+      DL: parseFloat(inputs.DL) || 0,
+      LL: parseFloat(inputs.LL) || 0,
+      SL: parseFloat(inputs.SL) || 0,
+      bf: parseFloat(inputs.bf) || 0,
+      soilRows: inputs.soilRows,
+    });
+
     setActiveFactors(factors);
-    setLayerwiseRows(rows);
+    setLayerwiseRows(enrichedRows);
     setError('');
   };
 
@@ -452,39 +465,22 @@ function RsWallDesign() {
 
           {layerwiseRows && layerwiseRows.length > 0 && (
             <SectionCard>
-              <SectionHeading>Layerwise reinforcement geometry</SectionHeading>
+              <SectionHeading>Layerwise external stability</SectionHeading>
               {activeFactors && (
                 <ResultMeta>
-                  Load combination {loadCombination}, design state {designState} — factors loaded for
-                  subsequent stability checks.
+                  Load combination {loadCombination}, design state {designState} — eccentricity, overturning,
+                  and sliding checks with iterative length adjustment (ΔL = 0.50 m).
                 </ResultMeta>
               )}
-              <TableWrapper>
-                <DataTable>
-                  <caption>External stability — layerwise table</caption>
-                  <thead>
-                    <tr>
-                      <th>Layer from bottom</th>
-                      <th>Zj (m)</th>
-                      <th>hj (m)</th>
-                      <th>Svj (m)</th>
-                      <th>L (m)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {layerwiseRows.map((row) => (
-                      <tr key={row.layerFromBottom}>
-                        <td>{row.layerFromBottom}</td>
-                        <td>{row.zj.toFixed(3)}</td>
-                        <td>{row.hj.toFixed(3)}</td>
-                        <td>{row.svj.toFixed(3)}</td>
-                        <td>{row.L.toFixed(3)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </DataTable>
-              </TableWrapper>
-              <Hint>L = max(0.7 × hj, 3.0). Rows stop when the next Zj would exceed design height H.</Hint>
+              <LayerwiseStabilityTable
+                rows={layerwiseRows}
+                loadCombination={loadCombination}
+                designState={designState}
+              />
+              <Hint>
+                Column L (5) is the initial length max(0.7 × hj, 3.0 m). Columns 6–16 and final L use the
+                adopted length after sequential eccentricity → overturning → sliding iteration.
+              </Hint>
             </SectionCard>
           )}
         </Canvas>

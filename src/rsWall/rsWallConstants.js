@@ -30,6 +30,10 @@ export const soilFactors = {
 };
 
 export const soilReinforcementFactors = {
+  sliding: {
+    ULS: 1.3,
+    SLS: 1.0,
+  },
   ULS: {
     interfaceFriction: 0.9,
     bearingCapacity: 0.9,
@@ -93,3 +97,27 @@ export const CONCRETE_GRADES = ['M15', 'M20', 'M25', 'M30', 'M35', 'M40', 'M45',
 export const LOAD_COMBINATION_OPTIONS = ['A', 'B', 'C'];
 
 export const DESIGN_STATE_OPTIONS = ['ULS', 'SLS'];
+
+/** Load factors for vertical components Rvj (by load combination A/B/C). */
+export const RV_LOAD_FACTORS = {
+  V1: { A: 1.5, B: 1.0, C: 1.0 },
+  V2: { A: 1.5, B: 1.0, C: 1.0 },
+  V3: { A: 1.5, B: 0.0, C: 0.0 },
+  V4: { A: 1.5, B: 1.0, C: 1.0 },
+};
+
+/** Load factors for horizontal components Rhj (by load combination A/B/C). */
+export const RH_LOAD_FACTORS = {
+  H1: { A: 1.5, B: 1.5, C: 1.0 },
+  H2: { A: 1.5, B: 0.0, C: 0.0 },
+  H3: { A: 1.5, B: 0.0, C: 0.0 },
+};
+
+export const EXTERNAL_STABILITY_LIMITS = {
+  eccentricityRatio: 1 / 6,
+  overturningRatio: 1.5,
+  slidingFos: 1.2,
+};
+
+export const LENGTH_ITERATION_STEP = 0.5;
+export const MAX_LENGTH_ITERATIONS = 100;

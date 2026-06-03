@@ -173,7 +173,7 @@ export const DataTable = styled.table`
   width: 100%;
   border-collapse: collapse;
   font-size: 0.92rem;
-  min-width: 640px;
+  min-width: ${({ $wide }) => ($wide ? '1800px' : '640px')};
 
   caption {
     caption-side: top;
@@ -226,4 +226,59 @@ export const ResultMeta = styled.p`
   font-size: 0.9rem;
   color: #475569;
   font-weight: 600;
+`;
+
+export const StatusBadge = styled.span`
+  display: inline-block;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  background: ${({ $variant }) => {
+    if ($variant === 'safe') return 'rgba(34, 197, 94, 0.18)';
+    if ($variant === 'fail') return 'rgba(239, 68, 68, 0.18)';
+    return 'rgba(245, 158, 11, 0.18)';
+  }};
+  color: ${({ $variant }) => {
+    if ($variant === 'safe') return '#15803d';
+    if ($variant === 'fail') return '#b91c1c';
+    return '#b45309';
+  }};
+  border: 1px solid
+    ${({ $variant }) => {
+      if ($variant === 'safe') return 'rgba(34, 197, 94, 0.45)';
+      if ($variant === 'fail') return 'rgba(239, 68, 68, 0.45)';
+      return 'rgba(245, 158, 11, 0.45)';
+    }};
+`;
+
+export const ForceDetails = styled.details`
+  margin-top: 0.35rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #475569;
+`;
+
+export const ForceDetailsSummary = styled.summary`
+  cursor: pointer;
+  color: #4338ca;
+  font-weight: 600;
+  list-style: none;
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+export const ForceDetailsList = styled.ul`
+  margin: 0.35rem 0 0;
+  padding-left: 1rem;
+  line-height: 1.5;
 `;
