@@ -170,73 +170,67 @@ function RsWallDesign() {
           <Header>
             <Title>RS Wall Design</Title>
             <Subtitle>
-              Reinforced soil retaining wall — geometry, soil parameters, loading, seismic inputs, and
-              layerwise external stability (expandable for earth pressure, pullout, sliding, and bearing checks).
+              Reinforced soil retaining wall — pre-filled example inputs (editable). Hover labels for full
+              descriptions. Layerwise external stability below.
             </Subtitle>
           </Header>
 
           <SectionsStack>
             <SectionCard>
-              <SectionHeading>Section 1 — Wall geometry</SectionHeading>
+              <SectionHeading>1 — Wall geometry</SectionHeading>
               <FormGrid>
-                <Label>
-                  Design height of wall, H (m)
-                  <Input name="H" type="number" min="0" step="any" value={inputs.H} onChange={handleChange} placeholder="e.g. 8.0" />
+                <Label title="Design height of wall, H (m)">
+                  H (m)
+                  <Input name="H" type="number" min="0" step="any" value={inputs.H} onChange={handleChange} />
                 </Label>
-                <Label>
-                  Depth of embankment, Dm (m)
-                  <Input name="Dm" type="number" min="0" step="any" value={inputs.Dm} onChange={handleChange} placeholder="e.g. 1.5" />
+                <Label title="Depth of embankment, Dm (m)">
+                  Dm (m)
+                  <Input name="Dm" type="number" min="0" step="any" value={inputs.Dm} onChange={handleChange} />
                 </Label>
-                <Label>
-                  Wall height above G.L, h (m)
-                  <Input readOnly value={hAboveGL !== null ? hAboveGL : ''} placeholder="H − Dm" />
+                <Label title="Wall height above ground level, h = H − Dm (m)">
+                  h (m)
+                  <Input readOnly value={hAboveGL !== null ? hAboveGL : ''} title="Auto: H − Dm" />
                 </Label>
-                <Label>
-                  Thickness of road material, Trm (m)
-                  <Input name="Trm" type="number" min="0" step="any" value={inputs.Trm} onChange={handleChange} placeholder="e.g. 0.5" />
+                <Label title="Thickness of road material, Trm (m)">
+                  Trm (m)
+                  <Input name="Trm" type="number" min="0" step="any" value={inputs.Trm} onChange={handleChange} />
                 </Label>
-                <Label>
-                  Mechanical height of wall, Ht (m)
-                  <Input readOnly value={Ht !== null ? Ht : ''} placeholder="H + Trm" />
+                <Label title="Mechanical height of wall, Ht = H + Trm (m)">
+                  Ht (m)
+                  <Input readOnly value={Ht !== null ? Ht : ''} title="Auto: H + Trm" />
                 </Label>
-                <Label>
-                  Average unit weight of pavement, γ_rm (kN/m³)
-                  <Input name="gammaRm" type="number" min="0" step="any" value={inputs.gammaRm} onChange={handleChange} placeholder="e.g. 22" />
+                <Label title="Average unit weight of pavement, γ_rm (kN/m³)">
+                  γ_rm (kN/m³)
+                  <Input name="gammaRm" type="number" min="0" step="any" value={inputs.gammaRm} onChange={handleChange} />
                 </Label>
               </FormGrid>
-              <Hint>h = H − Dm and Ht = H + Trm (auto-calculated).</Hint>
+              <Hint>h = H − Dm · Ht = H + Trm</Hint>
             </SectionCard>
 
             <SectionCard>
-              <SectionHeading>Section 2 — Wall inclination</SectionHeading>
+              <SectionHeading>2–3 — Inclination & slopes</SectionHeading>
               <FormGrid>
-                <Label>
-                  Measured from vertical, ω (°)
-                  <Input name="omega" type="number" min="0" max="89.9" step="any" value={inputs.omega} onChange={handleChange} placeholder="e.g. 5" />
+                <Label title="Wall inclination measured from vertical, ω (°)">
+                  ω (°)
+                  <Input name="omega" type="number" min="0" max="89.9" step="any" value={inputs.omega} onChange={handleChange} />
                 </Label>
-                <Label>
-                  Measured from horizontal, α (°)
-                  <Input name="alpha" type="number" min="0" max="89.9" step="any" value={inputs.alpha} onChange={handleChange} placeholder="e.g. 85" />
+                <Label title="Wall inclination measured from horizontal, α (°)">
+                  α (°)
+                  <Input name="alpha" type="number" min="0" max="89.9" step="any" value={inputs.alpha} onChange={handleChange} />
                 </Label>
-              </FormGrid>
-            </SectionCard>
-
-            <SectionCard>
-              <SectionHeading>Section 3 — Slopes</SectionHeading>
-              <FormGrid>
-                <Label>
-                  Front slope angle, i (°)
-                  <Input name="frontSlope" type="number" min="0" max="89.9" step="any" value={inputs.frontSlope} onChange={handleChange} placeholder="e.g. 0" />
+                <Label title="Front slope angle, i (°)">
+                  i front (°)
+                  <Input name="frontSlope" type="number" min="0" max="89.9" step="any" value={inputs.frontSlope} onChange={handleChange} />
                 </Label>
-                <Label>
-                  Back slope angle, β (°)
-                  <Input name="backSlope" type="number" min="0" max="89.9" step="any" value={inputs.backSlope} onChange={handleChange} placeholder="e.g. 0" />
+                <Label title="Back slope angle, β (°)">
+                  β back (°)
+                  <Input name="backSlope" type="number" min="0" max="89.9" step="any" value={inputs.backSlope} onChange={handleChange} />
                 </Label>
               </FormGrid>
             </SectionCard>
 
-            <SectionCard>
-              <SectionHeading>Section 4 — Input soil parameters (long-term stability)</SectionHeading>
+            <SectionCard data-span="full">
+              <SectionHeading>4 — Soil parameters (long-term stability)</SectionHeading>
               <TableWrapper>
                 <DataTable>
                   <caption>Editable soil properties</caption>
@@ -297,36 +291,36 @@ function RsWallDesign() {
             </SectionCard>
 
             <SectionCard>
-              <SectionHeading>Section 5 — External loading</SectionHeading>
+              <SectionHeading>5 — External loading</SectionHeading>
               <FormGrid>
-                <Label>
-                  Dead load surcharge, DL (kN/m²)
-                  <Input name="DL" type="number" min="0" step="any" value={inputs.DL} onChange={handleChange} placeholder="e.g. 10" />
+                <Label title="Dead load surcharge, DL (kN/m²)">
+                  DL (kN/m²)
+                  <Input name="DL" type="number" min="0" step="any" value={inputs.DL} onChange={handleChange} />
                 </Label>
-                <Label>
-                  Traffic surcharge, LL (kN/m²)
-                  <Input name="LL" type="number" min="0" step="any" value={inputs.LL} onChange={handleChange} placeholder="e.g. 20" />
+                <Label title="Traffic surcharge, LL (kN/m²)">
+                  LL (kN/m²)
+                  <Input name="LL" type="number" min="0" step="any" value={inputs.LL} onChange={handleChange} />
                 </Label>
-                <Label>
-                  Strip loading, SL (kN/m²)
-                  <Input name="SL" type="number" min="0" step="any" value={inputs.SL} onChange={handleChange} placeholder="e.g. 0" />
+                <Label title="Strip loading, SL (kN/m²)">
+                  SL (kN/m²)
+                  <Input name="SL" type="number" min="0" step="any" value={inputs.SL} onChange={handleChange} />
                 </Label>
-                <Label>
-                  Width of friction slab (for SL), bf (m)
-                  <Input name="bf" type="number" min="0" step="any" value={inputs.bf} onChange={handleChange} placeholder="e.g. 2" />
+                <Label title="Width of friction slab (for SL), bf (m)">
+                  bf (m)
+                  <Input name="bf" type="number" min="0" step="any" value={inputs.bf} onChange={handleChange} />
                 </Label>
-                <Label>
-                  Distance from wall edge to centre of strip load, d (m)
-                  <Input name="d" type="number" min="0" step="any" value={inputs.d} onChange={handleChange} placeholder="e.g. 1.5" />
+                <Label title="Distance from wall edge to centre of strip load, d (m)">
+                  d (m)
+                  <Input name="d" type="number" min="0" step="any" value={inputs.d} onChange={handleChange} />
                 </Label>
               </FormGrid>
             </SectionCard>
 
             <SectionCard>
-              <SectionHeading>Section 6 — Input seismic parameters</SectionHeading>
+              <SectionHeading>6 — Seismic parameters</SectionHeading>
               <FormGrid>
-                <Label>
-                  Seismic zone
+                <Label title="Seismic zone">
+                  Zone
                   <Select name="seismicZone" value={inputs.seismicZone} onChange={handleChange}>
                     {SEISMIC_ZONE_OPTIONS.map((zone) => (
                       <option key={zone} value={zone}>
@@ -335,38 +329,30 @@ function RsWallDesign() {
                     ))}
                   </Select>
                 </Label>
-                <Label>
-                  Maximum ground acceleration coefficient, α₀
-                  <Input
-                    readOnly
-                    value={seismicCoeffs.alpha0 !== null ? seismicCoeffs.alpha0 : ''}
-                    placeholder="From zone"
-                  />
+                <Label title="Maximum ground acceleration coefficient, α₀">
+                  α₀
+                  <Input readOnly value={seismicCoeffs.alpha0 !== null ? seismicCoeffs.alpha0 : ''} title="From seismic zone" />
                 </Label>
-                <Label>
-                  Maximum wall acceleration coefficient, αₘ
-                  <Input
-                    readOnly
-                    value={seismicCoeffs.alpham !== null ? seismicCoeffs.alpham : ''}
-                    placeholder="From zone"
-                  />
+                <Label title="Maximum wall acceleration coefficient, αₘ">
+                  αₘ
+                  <Input readOnly value={seismicCoeffs.alpham !== null ? seismicCoeffs.alpham : ''} title="From seismic zone" />
                 </Label>
               </FormGrid>
             </SectionCard>
 
             <SectionCard>
-              <SectionHeading>Section 7 — Facing panel details</SectionHeading>
+              <SectionHeading>7 — Facing panel</SectionHeading>
               <FormGrid>
-                <Label>
-                  Height of facing panel, Hp (m)
-                  <Input name="Hp" type="number" min="0" step="any" value={inputs.Hp} onChange={handleChange} placeholder="e.g. 0.5" />
+                <Label title="Height of facing panel, Hp (m)">
+                  Hp (m)
+                  <Input name="Hp" type="number" min="0" step="any" value={inputs.Hp} onChange={handleChange} />
                 </Label>
-                <Label>
-                  Width of facing panel, Wp (m)
-                  <Input name="Wp" type="number" min="0" step="any" value={inputs.Wp} onChange={handleChange} placeholder="e.g. 1.2" />
+                <Label title="Width of facing panel, Wp (m)">
+                  Wp (m)
+                  <Input name="Wp" type="number" min="0" step="any" value={inputs.Wp} onChange={handleChange} />
                 </Label>
-                <Label>
-                  Grade of concrete
+                <Label title="Grade of concrete">
+                  Concrete
                   <Select name="concreteGrade" value={inputs.concreteGrade} onChange={handleChange}>
                     {CONCRETE_GRADES.map((grade) => (
                       <option key={grade} value={grade}>
@@ -379,15 +365,15 @@ function RsWallDesign() {
             </SectionCard>
 
             <SectionCard>
-              <SectionHeading>Section 8 — Placement of reinforcement layers</SectionHeading>
+              <SectionHeading>8 — Reinforcement layers</SectionHeading>
               <FormGrid>
-                <Label>
-                  Height of first layer from top of levelling pad, Zj (m)
-                  <Input name="Zj" type="number" min="0" step="any" value={inputs.Zj} onChange={handleChange} placeholder="e.g. 0.5" />
+                <Label title="Height of first layer from top of levelling pad, Zj (m)">
+                  Zj (m)
+                  <Input name="Zj" type="number" min="0" step="any" value={inputs.Zj} onChange={handleChange} />
                 </Label>
-                <Label>
-                  Vertical distance between reinforcement layers, Sv (m)
-                  <Input name="Sv" type="number" min="0" step="any" value={inputs.Sv} onChange={handleChange} placeholder="e.g. 0.6" />
+                <Label title="Vertical distance between reinforcement layers, Sv (m)">
+                  Sv (m)
+                  <Input name="Sv" type="number" min="0" step="any" value={inputs.Sv} onChange={handleChange} />
                 </Label>
               </FormGrid>
             </SectionCard>

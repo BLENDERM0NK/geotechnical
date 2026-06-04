@@ -9,15 +9,15 @@ export const Page = styled.div`
 `;
 
 export const Canvas = styled.div`
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
   background: rgba(255, 255, 255, 0.96);
   border-radius: 32px;
-  padding: clamp(1.5rem, 3vw, 3rem);
+  padding: clamp(1rem, 2.5vw, 2rem);
   box-shadow: 0 30px 60px rgba(15, 23, 42, 0.25);
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.25rem;
 `;
 
 export const Header = styled.header`
@@ -36,38 +36,53 @@ export const Title = styled.h1`
 export const Subtitle = styled.p`
   margin: 0 auto;
   max-width: 760px;
-  line-height: 1.6;
+  line-height: 1.45;
+  font-size: 0.9rem;
   color: #475569;
 `;
 
+/** Two-column section layout on wide screens to reduce vertical scroll. */
 export const SectionsStack = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+
+  @media (min-width: 900px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
 `;
 
 export const SectionCard = styled.section`
   background: #f8fafc;
-  border-radius: 24px;
-  padding: clamp(1.25rem, 3vw, 1.75rem);
+  border-radius: 16px;
+  padding: 0.75rem 0.9rem;
   border: 1px solid rgba(148, 163, 184, 0.4);
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.55rem;
+  min-width: 0;
+
+  &[data-span='full'] {
+    @media (min-width: 900px) {
+      grid-column: 1 / -1;
+    }
+  }
 `;
 
 export const SectionHeading = styled.h2`
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 0.95rem;
   color: #0f172a;
-  padding-bottom: 0.35rem;
+  padding-bottom: 0.25rem;
   border-bottom: 2px solid rgba(99, 102, 241, 0.25);
 `;
 
 export const FormGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 0.5rem 0.65rem;
+  align-items: start;
 `;
 
 export const Label = styled.label`
@@ -75,15 +90,20 @@ export const Label = styled.label`
   flex-direction: column;
   font-weight: 600;
   color: #1f2937;
-  font-size: 0.95rem;
-  gap: 0.35rem;
+  font-size: 0.72rem;
+  line-height: 1.25;
+  gap: 0.2rem;
+  min-width: 0;
 `;
 
 export const Input = styled.input`
-  border-radius: 14px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  border-radius: 8px;
   border: 1px solid rgba(148, 163, 184, 0.7);
-  padding: 0.6rem 0.85rem;
-  font-size: 1rem;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.85rem;
   background: #fff;
 
   &:read-only {
@@ -94,10 +114,13 @@ export const Input = styled.input`
 `;
 
 export const Select = styled.select`
-  border-radius: 14px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  border-radius: 8px;
   border: 1px solid rgba(148, 163, 184, 0.7);
-  padding: 0.6rem 0.85rem;
-  font-size: 1rem;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.85rem;
   background: #fff;
 `;
 
@@ -145,10 +168,10 @@ export const ErrorBanner = styled.div`
 
 export const Hint = styled.p`
   margin: 0;
-  font-size: 0.78rem;
+  font-size: 0.68rem;
   font-weight: 500;
   color: #64748b;
-  line-height: 1.45;
+  line-height: 1.35;
 `;
 
 export const CalcPanel = styled.div`
@@ -172,14 +195,16 @@ export const TableWrapper = styled.div`
 export const DataTable = styled.table`
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.92rem;
-  min-width: ${({ $wide }) => ($wide ? '1800px' : '640px')};
+  font-size: 0.8rem;
+  table-layout: fixed;
+  min-width: ${({ $wide }) => ($wide ? '1800px' : '0')};
 
   caption {
     caption-side: top;
     text-align: left;
-    padding: 0.85rem 1rem;
+    padding: 0.45rem 0.65rem;
     font-weight: 700;
+    font-size: 0.75rem;
     color: #0f172a;
     background: #f1f5f9;
     border-bottom: 1px solid rgba(148, 163, 184, 0.4);
@@ -189,16 +214,19 @@ export const DataTable = styled.table`
     background: #0f172a;
     color: #e2e8f0;
     font-weight: 600;
-    padding: 0.75rem 0.85rem;
+    padding: 0.4rem 0.45rem;
     text-align: center;
     white-space: nowrap;
+    font-size: 0.72rem;
   }
 
   tbody td {
-    padding: 0.65rem 0.85rem;
+    padding: 0.35rem 0.4rem;
     text-align: center;
     border-bottom: 1px solid rgba(148, 163, 184, 0.25);
     color: #1e293b;
+    overflow: hidden;
+    vertical-align: middle;
   }
 
   tbody tr:nth-child(even) {
@@ -212,11 +240,13 @@ export const DataTable = styled.table`
 
 export const SoilTableInput = styled.input`
   width: 100%;
-  min-width: 4rem;
-  border-radius: 10px;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  border-radius: 6px;
   border: 1px solid rgba(148, 163, 184, 0.65);
-  padding: 0.45rem 0.55rem;
-  font-size: 0.9rem;
+  padding: 0.3rem 0.35rem;
+  font-size: 0.8rem;
   background: #fff;
   text-align: center;
 `;
