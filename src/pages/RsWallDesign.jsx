@@ -464,8 +464,8 @@ function RsWallDesign() {
                 designState={designState}
               />
               <Hint>
-                Column L (5) is the initial length max(0.7 × hj, 3.0 m). Columns 6–16 and final L use the
-                adopted length after sequential eccentricity → overturning → sliding iteration.
+                Summary shows final adopted L and check status per layer. Expand &quot;Show All Calculations&quot;
+                for full Rvj, Rhj, moment, eccentricity, and iteration detail.
               </Hint>
             </SectionCard>
           )}

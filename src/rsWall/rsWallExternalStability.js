@@ -183,6 +183,9 @@ export function iterateReinforcementLength(params) {
 
   let governingCheck = 'None';
   let designNotAchievable = false;
+  let eccentricitySafeAtL = null;
+  let overturningSafeAtL = null;
+  let slidingSafeAtL = null;
 
   const eccentricityPhase = runLengthPhase(
     'Eccentricity',
@@ -196,8 +199,11 @@ export function iterateReinforcementLength(params) {
 
   if (!eccentricityPhase.achieved) {
     designNotAchievable = true;
-  } else if (eccentricityPhase.governingCheck) {
-    governingCheck = eccentricityPhase.governingCheck;
+  } else {
+    eccentricitySafeAtL = L;
+    if (eccentricityPhase.governingCheck) {
+      governingCheck = eccentricityPhase.governingCheck;
+    }
   }
 
   if (!designNotAchievable) {
@@ -213,8 +219,11 @@ export function iterateReinforcementLength(params) {
 
     if (!overturningPhase.achieved) {
       designNotAchievable = true;
-    } else if (overturningPhase.governingCheck) {
-      governingCheck = overturningPhase.governingCheck;
+    } else {
+      overturningSafeAtL = L;
+      if (overturningPhase.governingCheck) {
+        governingCheck = overturningPhase.governingCheck;
+      }
     }
   }
 
@@ -231,8 +240,11 @@ export function iterateReinforcementLength(params) {
 
     if (!slidingPhase.achieved) {
       designNotAchievable = true;
-    } else if (slidingPhase.governingCheck) {
-      governingCheck = slidingPhase.governingCheck;
+    } else {
+      slidingSafeAtL = L;
+      if (slidingPhase.governingCheck) {
+        governingCheck = slidingPhase.governingCheck;
+      }
     }
   }
 
@@ -243,6 +255,9 @@ export function iterateReinforcementLength(params) {
     finalL: L,
     governingCheck: designNotAchievable ? null : governingCheck,
     designNotAchievable,
+    eccentricitySafeAtL,
+    overturningSafeAtL,
+    slidingSafeAtL,
     eccentricitySafe: final.eOverL <= eccentricityRatio,
     overturningSafe: final.mrMo >= overturningRatio,
     slidingSafe: final.slidingFos >= slidingFosLimit,
@@ -288,8 +303,11 @@ export function computeExternalStabilityRows({
       L: row.L,
       initialL: result.initialL,
       finalL: result.finalL,
-      governingCheck: result.designNotAchievable ? 'DESIGN NOT ACHIEVABLE' : result.governingCheck,
+      governingCheck: result.designNotAchievable ? 'NOT ACHIEVABLE' : result.governingCheck,
       designNotAchievable: result.designNotAchievable,
+      eccentricitySafeAtL: result.eccentricitySafeAtL,
+      overturningSafeAtL: result.overturningSafeAtL,
+      slidingSafeAtL: result.slidingSafeAtL,
       Rvj: result.Rvj,
       Rhj: result.Rhj,
       Mr: result.Mr,

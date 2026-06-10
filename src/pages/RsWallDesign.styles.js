@@ -236,6 +236,16 @@ export const DataTable = styled.table`
   tbody tr:hover {
     background: rgba(99, 102, 241, 0.06);
   }
+
+  ${({ $stickyHeader }) =>
+    $stickyHeader &&
+    `
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+  `}
 `;
 
 export const SoilTableInput = styled.input`
@@ -311,4 +321,158 @@ export const ForceDetailsList = styled.ul`
   margin: 0.35rem 0 0;
   padding-left: 1rem;
   line-height: 1.5;
+`;
+
+export const DesignSummaryCard = styled.div`
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+  border: 1px solid
+    ${({ $safe }) => ($safe ? 'rgba(34, 197, 94, 0.45)' : 'rgba(239, 68, 68, 0.45)')};
+  background: ${({ $safe }) =>
+    $safe ? 'rgba(34, 197, 94, 0.08)' : 'rgba(239, 68, 68, 0.08)'};
+`;
+
+export const SummaryGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.85rem 1.25rem;
+`;
+
+export const SummaryItem = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+`;
+
+export const SummaryLabel = styled.span`
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+`;
+
+export const SummaryValue = styled.span`
+  font-size: 1rem;
+  font-weight: 700;
+  color: ${({ $highlight }) => ($highlight ? '#b91c1c' : '#0f172a')};
+`;
+
+export const SummaryTableWrapper = styled.div`
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background: #fff;
+
+  @media (min-width: 900px) {
+    overflow-x: visible;
+  }
+`;
+
+export const SummaryDataTable = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  table-layout: auto;
+
+  caption {
+    caption-side: top;
+    text-align: left;
+    padding: 0.45rem 0.65rem;
+    font-weight: 700;
+    font-size: 0.75rem;
+    color: #0f172a;
+    background: #f1f5f9;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.4);
+  }
+
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #0f172a;
+    color: #e2e8f0;
+    font-weight: 600;
+    padding: 0.4rem 0.5rem;
+    text-align: center;
+    white-space: nowrap;
+    font-size: 0.7rem;
+  }
+
+  tbody td {
+    padding: 0.35rem 0.45rem;
+    text-align: center;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+    color: #1e293b;
+    vertical-align: middle;
+  }
+
+  tbody tr:nth-child(even) {
+    background: rgba(248, 250, 252, 0.95);
+  }
+
+  tbody tr:hover {
+    background: rgba(99, 102, 241, 0.05);
+  }
+`;
+
+export const CheckBadge = styled.span`
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.35;
+  white-space: normal;
+  max-width: 9rem;
+  background: ${({ $variant }) =>
+    $variant === 'safe' ? 'rgba(34, 197, 94, 0.16)' : 'rgba(239, 68, 68, 0.16)'};
+  color: ${({ $variant }) => ($variant === 'safe' ? '#15803d' : '#b91c1c')};
+  border: 1px solid
+    ${({ $variant }) =>
+      $variant === 'safe' ? 'rgba(34, 197, 94, 0.4)' : 'rgba(239, 68, 68, 0.4)'};
+`;
+
+export const ResultsActions = styled.div`
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 0.25rem;
+`;
+
+export const ToggleDetailsButton = styled.button`
+  padding: 0.55rem 1.35rem;
+  border-radius: 8px;
+  border: 1px solid rgba(15, 23, 42, 0.18);
+  background: #fff;
+  color: #0f172a;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+
+  &:hover {
+    background: #f8fafc;
+    border-color: rgba(37, 99, 235, 0.35);
+  }
+`;
+
+export const DetailsAccordion = styled.div`
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+`;
+
+export const DetailsAccordionHeader = styled.div`
+  padding: 0.55rem 0.85rem;
+  background: #f1f5f9;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #334155;
+`;
+
+export const DetailsAccordionBody = styled.div`
+  padding: 0.5rem;
 `;
